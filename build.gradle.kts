@@ -19,6 +19,14 @@ tasks.test {
     useJUnitPlatform()
 }
 
+task("run", JavaExec::class) {
+    standardInput = System.`in`
+    group = "application"
+    mainClass.set("HereToThereKt")
+    setArgsString("/tmp/source /tmp/pics /tmp/videos /tmp/backup")
+    classpath = sourceSets["main"].runtimeClasspath
+}
+
 dependencies {
     implementation(kotlin("stdlib"))
     implementation("org.jetbrains.kotlin:kotlin-script-runtime:$kotlinVersion")
