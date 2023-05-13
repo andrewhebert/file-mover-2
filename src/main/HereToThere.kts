@@ -11,6 +11,7 @@ import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeFormatter.ISO_LOCAL_DATE
 import java.time.format.FormatStyle
 
+
 main(args)
 
 fun main(args: Array<String>) {
@@ -32,9 +33,11 @@ fun walk(source: Path, pictures: Path, videos: Path, backup: Path) {
                 "jpg", "jpeg", "png" -> {
                     dest = pictures.toString()
                 }
+
                 "mp4", "mpg", "mpeg", "mov" -> {
                     dest = videos.toString()
                 }
+
                 else -> {
                     println(
                         "${f.toFile().extension} is not supported.  Ignoring ${

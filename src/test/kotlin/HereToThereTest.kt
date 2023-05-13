@@ -1,13 +1,21 @@
+import com.drew.imaging.ImageMetadataReader
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.nio.file.CopyOption
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardCopyOption
+import java.nio.file.StandardCopyOption.REPLACE_EXISTING
 import java.nio.file.attribute.FileTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
+import kotlin.io.path.toPath
 
 class HereToThereTest {
 
@@ -19,6 +27,12 @@ class HereToThereTest {
     private lateinit var vid: Path
     private lateinit var unknown: Path
 
+    //no headers
+    private val giannisNoHeaders = javaClass.getResource("/giannis.jpg")!!.toURI().toPath()
+
+    //iphone
+    private val iphoneMP4 = javaClass.getResource("/iphone.mp4")!!.toURI().toPath()
+
     @BeforeEach
     fun before() {
         source = Files.createTempDirectory("htt-source")
@@ -26,14 +40,14 @@ class HereToThereTest {
         vidsTarget = Files.createTempDirectory("htt-vids")
         bakTarget = Files.createTempDirectory("htt-bak")
         pic = source.resolve("pic.jpg")
-        vid = source.resolve("vid.mpg")
+        vid = source.resolve("vid.mp4")
         unknown = source.resolve("file.unknown")
     }
 
     @Test
     fun `picture file is correctly moved`() {
 
-        val sourceFile = Files.createFile(pic)
+        val sourceFile = Files.copy(giannisNoHeaders, pic, REPLACE_EXISTING)
 
         val sourceLastModified = FileTime.from(
             ZonedDateTime.of(
@@ -86,7 +100,7 @@ class HereToThereTest {
         Files.createDirectories(preMovedFile.parent)
         Files.createFile(preMovedFile)
 
-        Files.createFile(pic)
+        Files.copy(giannisNoHeaders, pic, REPLACE_EXISTING)
         Files.setLastModifiedTime(
             pic,
             FileTime.from(
@@ -143,7 +157,7 @@ class HereToThereTest {
             bakTarget.toAbsolutePath()
         )
 
-        val moved = vidsTarget.resolve("2022/01-January/vid.mpg")
+        val moved = vidsTarget.resolve("2022/01-January/vid.mp4")
         assertTrue(Files.exists(moved))
         assertFalse(Files.exists(sourceFile))
         assertEquals(
@@ -166,7 +180,7 @@ class HereToThereTest {
     fun `vid is not moved when vid of same name is already there`() {
 
         //create a file as if it was moved there
-        val preMovedFile = vidsTarget.resolve("2022/01-January/vid.mpg")
+        val preMovedFile = vidsTarget.resolve("2022/01-January/vid.mp4")
         Files.createDirectories(preMovedFile.parent)
         Files.createFile(preMovedFile)
 
@@ -228,6 +242,18 @@ class HereToThereTest {
         assertTrue(Files.exists(sourceFile))
         assertEquals(Files.newDirectoryStream(vidsTarget).count(), 0)
         assertEquals(Files.newDirectoryStream(picsTarget).count(), 0)
+    }
+
+    @Test
+    fun `test creation date is extracted from mp4`(){
+        val metadata = ImageMetadataReader.readMetadata(javaClass.getResourceAsStream("/iphone.mp4"))
+        assertEquals(Instant.parse("2023-04-15T16:54:13+00:00"), metadata.mp4Extract())
+    }
+
+    @Test
+    fun `test creation date is extracted from jpg`(){
+        val metadata = ImageMetadataReader.readMetadata(javaClass.getResourceAsStream("/iphone.JPG"))
+        assertEquals(Instant.parse("2023-04-15T17:48:03.391+00:00"), metadata.exifExtract())
     }
 
 }
