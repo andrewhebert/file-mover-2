@@ -19,13 +19,22 @@ tasks.test {
     useJUnitPlatform()
 }
 
+
 task("run", JavaExec::class) {
     standardInput = System.`in`
     group = "application"
     mainClass.set("HereToThereKt")
-    setArgsString("/tmp/source /tmp/pics /tmp/videos /tmp/backup")
+    setArgsString("/home/ahebert/shared-3 /mnt/hdd-2/Media/Pictures /mnt/hdd-2/Media/Videos /tmp")
     classpath = sourceSets["main"].runtimeClasspath
 }
+
+//task("run", JavaExec::class) {
+//    standardInput = System.`in`
+//    group = "application"
+//    mainClass.set("HereToThereKt")
+//    setArgsString("/tmp/source /tmp/pics /tmp/videos /tmp/backup")
+//    classpath = sourceSets["main"].runtimeClasspath
+//}
 
 dependencies {
     implementation(kotlin("stdlib"))
