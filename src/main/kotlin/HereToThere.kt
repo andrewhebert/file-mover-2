@@ -112,7 +112,7 @@ fun LocalDateTime.toOrganizedDir(): String {
 fun Path.getInputs(pictures: Path, videos: Path): Pair<String?, Instant?> {
     var dest: String? = null
     var creationDateTime: Instant? = null
-    when (this.toFile().extension) {
+    when (this.toFile().extension.lowercase()) {
         "jpg", "jpeg" -> {
             dest = pictures.toString()
             creationDateTime =
