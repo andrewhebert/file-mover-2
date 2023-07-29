@@ -6,14 +6,17 @@ import com.drew.metadata.exif.ExifSubIFDDirectory
 import com.drew.metadata.mov.metadata.QuickTimeMetadataDirectory
 import com.drew.metadata.mp4.media.Mp4MetaDirectory
 import kotlinx.datetime.*
+import org.apache.commons.codec.digest.DigestUtils
+import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.StandardCopyOption
+import java.nio.file.StandardCopyOption.COPY_ATTRIBUTES
+import java.nio.file.StandardCopyOption.REPLACE_EXISTING
 import java.nio.file.attribute.FileTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeFormatter.ISO_LOCAL_DATE
 import java.time.format.FormatStyle
-
+import kotlin.io.path.readBytes
 
 fun main(args: Array<String>) {
     val source = Path.of(args[0])
@@ -82,7 +85,7 @@ fun Metadata.movExtract() =
     } catch (e: Exception) {
         println("problem reading QuickTimeMetadataDirectory: ${e.message}")
         null
-    }?.getDate(QuickTimeMetadataDirectory.TAG_CREATION_TIME)
+    }?.getDate(QuickTimeMetadataDirectory.TAG_CREATION_DATE)
         ?.toInstant()?.toKotlinInstant()
 
 fun Metadata.mp4Extract() =
@@ -119,6 +122,12 @@ fun Path.getInputs(pictures: Path, videos: Path): Pair<String?, Instant?> {
                 this.getMetadata()?.mp4Extract()
         }
 
+        "mov" -> {
+            dest = videos.toString()
+            creationDateTime =
+                this.getMetadata()?.movExtract()
+        }
+
         else -> {
             println(
                 "${this.toFile().extension} is not supported.  Ignoring ${
@@ -138,11 +147,20 @@ fun Path.setLastModifiedTimeTo(instant: Instant): Path {
 fun Path.copyMeTo(target: Path): Path? {
     return try {
         Files.createDirectories(target.parent)
-        Files.copy(this, target, StandardCopyOption.COPY_ATTRIBUTES)
+        Files.copy(this, target, COPY_ATTRIBUTES)
     } catch (e: Exception) {
-        println("There was a problem copying ${this.toAbsolutePath()} to ${target.toAbsolutePath()}. Exception: ${e.message}")
-        e.printStackTrace()
-        null
+        if (e is FileAlreadyExistsException) {
+            val meHash = DigestUtils.md5Hex(this.readBytes())
+            val targetHash = DigestUtils.md5Hex(target.readBytes())
+            return if (meHash == targetHash) {
+                Files.copy(this, target, COPY_ATTRIBUTES, REPLACE_EXISTING)
+            } else {
+                null
+            }
+        } else {
+            println("There was a problem copying ${this.toAbsolutePath()} to ${target.toAbsolutePath()}. Exception: ${e.message}")
+            null
+        }
     }
 
 }

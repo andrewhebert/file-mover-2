@@ -38,6 +38,8 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.0")
 
     implementation("com.drewnoakes:metadata-extractor:2.18.0")
+    implementation("commons-codec:commons-codec:1.16.0")
+
 
     testImplementation("org.junit.jupiter:junit-jupiter-engine:5.8.2")
     testImplementation("org.junit-pioneer:junit-pioneer:1.6.2")
