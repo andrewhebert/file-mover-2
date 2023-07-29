@@ -60,8 +60,11 @@ fun walk(source: Path, pictures: Path, videos: Path, backup: Path) {
                         Files.createDirectories(bak.parent)
                         Files.move(path, bak)
                     } catch (e: Exception) {
-                        println("There was a problem moving and backing up ${path.toAbsolutePath()} to ${bak.toAbsolutePath()}. Exception: ${e.message}")
-                        e.printStackTrace()
+                        if (e is FileAlreadyExistsException && path.myContentIsSameAs(bak)) {
+                            Files.move(path, bak, REPLACE_EXISTING)
+                        } else {
+                            println("There was a problem moving and backing up ${path.toAbsolutePath()} to ${bak.toAbsolutePath()}. Exception: ${e.message}")
+                        }
                     }
                     println("bak'd up ${path.toAbsolutePath()} to ${bak.toAbsolutePath()}")
                 }
@@ -150,9 +153,7 @@ fun Path.copyMeTo(target: Path): Path? {
         Files.copy(this, target, COPY_ATTRIBUTES)
     } catch (e: Exception) {
         if (e is FileAlreadyExistsException) {
-            val meHash = DigestUtils.md5Hex(this.readBytes())
-            val targetHash = DigestUtils.md5Hex(target.readBytes())
-            return if (meHash == targetHash) {
+            return if (this.myContentIsSameAs(target)) {
                 Files.copy(this, target, COPY_ATTRIBUTES, REPLACE_EXISTING)
             } else {
                 null
@@ -162,7 +163,12 @@ fun Path.copyMeTo(target: Path): Path? {
             null
         }
     }
+}
 
+fun Path.myContentIsSameAs(target: Path): Boolean {
+    val meHash = DigestUtils.md5Hex(this.readBytes())
+    val targetHash = DigestUtils.md5Hex(target.readBytes())
+    return meHash == targetHash
 }
 
 fun Path.getMetadata(): Metadata? {
